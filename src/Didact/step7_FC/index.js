@@ -87,21 +87,13 @@ function performUnitOfWork(fiber) {
 	console.log('performUintOfWork', fiber)
 	// 1. beginWork
 	// TODO add dom node
-
-	// 一边遍历 element，一边生成新的 DOM 节点并且添加到其父节点上。
-	// 在完成整棵树的渲染前，浏览器还要中途阻断这个过程。
-	// 那么用户就有可能看到渲染未完全的 UI。我们不想让这个事情发生。
-	// 因此把修改 DOM 节点的这部分给单独移出
-	// if (fiber.parent) {
-	// 	fiber.parent.dom.appendChild(fiber.dom)
-	// }
-	if (!fiber.dom) {
-		fiber.dom = createDom(fiber)
+	const isFunctionComponent = fiber.type instanceof Function
+	if(isFunctionComponent){
+		updateFunctionComponent(fiber)
+	}else{
+		updateHostComponent(fiber)
 	}
-
-	// TODO create new fibers
-	const elements = fiber.props.children
-	reconsileChildren(fiber, elements)
+	
 	// TODO return next unit of work
 	if (fiber.child) {
 		return fiber.child
@@ -113,6 +105,24 @@ function performUnitOfWork(fiber) {
 		}
 		nextFiber = nextFiber.parent
 	}
+}
+function updateFunctionComponent(fiber){
+	// TODO
+	const children = [fiber.type(fiber.props)]
+	reconsileChildren(fiber, children)
+}
+function updateHostComponent(fiber){
+	// TODO 
+	if (!fiber.dom) {
+		fiber.dom = createDom(fiber)
+	}
+	if (!fiber.dom) {
+		fiber.dom = createDom(fiber)
+	}
+
+	// TODO create new fibers
+	const elements = fiber.props.children
+	reconsileChildren(fiber, elements)
 }
 // 创建为fiber创建子节点的同时，调和（reconcile）旧的 fiber 节点 和新的 react elements
 // 在迭代整个 react elements 数组的同时我们也会迭代旧的 fiber 节点（wipFiber.alternate）
@@ -209,17 +219,33 @@ function commitWork(fiber) {
 	if (!fiber) {
 		return
 	}
-	const domParent = fiber.parent.dom
+	// 函数组件没有 DOM 节点，在实际的 DOM 寻找[父子]节点等操作中需要被跳过
+	// 找 DOM 节点的父节点的时候我们需要[往上]遍历 fiber 节点，直到找到有 DOM 节点的 fiber 节点
+	let domParentFiber = fiber.parent
+	while(!domParentFiber.dom){
+		domParentFiber = domParentFiber.parent
+	}
+	const domParent = domParentFiber.dom
+
 	if (fiber.effectTag === 'PLACEMENT' && fiber.dom != null) {
+		// 为什么这里没有进行向下寻找
 		domParent.appendChild(fiber.dom)
-	} else if (fiber.effectTag === 'DELETION') {
-		domParent.removeChild(fiber.dom)
 	} else if (fiber.effectTag === 'UPDATE' && fiber.dom != null) {
 		updateDom(fiber.dom, fiber.alternate.props, fiber.props)
+	} else if (fiber.effectTag === 'DELETION') {
+		commitDeletion(fiber, domParent)
 	}
 
 	commitWork(fiber.child)
 	commitWork(fiber.sibling)
+}
+// 找 DOM 节点的子节点的时候我们需要[往下]遍历 fiber 节点，直到找到有 DOM 节点的 fiber 节点
+function commitDeletion(fiber, domParent){
+	if(fiber.dom){
+		domParent.removeChild(fiber.dom)
+	}else{
+		commitDeletion(fiber.child, domParent)
+	}
 }
 const isEvent = (key) => key.startsWith('on')
 const isProperty = (key) => key !== 'children' && !isEvent(key)
