@@ -1,11 +1,11 @@
-# introduce
+# overview
 This project is used to learn how to build react by the blog,
 [build-your-own-react](https://pomb.us/build-your-own-react/)
-
+At step 8, we finally build a didact with capacities of react including fibers, reconcileChildren, functionComponent, hooks, ...
 # command
 `npm run start`
 
-# key world
+# key worlds
 - sibling
     n.  **兄弟姐妹**
 - idle

@@ -1,4 +1,4 @@
-import {Didact} from './Didact/step7_FC'
+import {Didact} from './Didact/step8_hooks'
 console.log('running')
 const root = document.getElementById('root')
 
@@ -14,6 +14,27 @@ const root = document.getElementById('root')
 function App(props) {
 	return Didact.createElement('h1', null, 'Hi ', props.name)
 }
+/* function Counter() {
+ *  const [state, setState] = Didact.useState(1)
+ *  return (
+ *   <h1 onClick={() => setState(c => c + 1)}>
+ *    Count: {state}
+ *   </h1>
+ *  )
+ * }
+ * 
+ */
+function Counter() {
+	const [state, setState] = Didact.useState(1)
+	return Didact.createElement(
+		'h1',
+		{
+			onClick: () => setState((c) => c + 1),
+		},
+		'Count: ',
+		state
+	)
+}
 
 const element = Didact.createElement(
 	'div',
@@ -26,7 +47,8 @@ const element = Didact.createElement(
 		'bar'
 	),
 	Didact.createElement('b'),
-	Didact.createElement(App, {name: 'boo'})
+	Didact.createElement(App, {name: 'boo'}),
+    Didact.createElement(Counter)
 )
 
 Didact.render(element, root)
